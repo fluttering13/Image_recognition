@@ -8,6 +8,7 @@ pyautigui主要是控制滑鼠跟鍵盤的程式，同時也有支援簡單的�
 CV2上我們主要是使用大張的圖像辨識，有一些算法可以幫助我們縮短這個過程
 
 ＃ 前言
+
 這個鬼東西足足花了我三天的時間，有很多時間都是在建立圖像位置跟定位程式
 
 先有了一個雛形後再慢慢修細節，兩天都在無限重跑繼續抓蟲
@@ -40,8 +41,18 @@ IMREAD_COLOR:RGB三色的(X,Y,3)
 此處我們只做灰階也足夠，但是測試算法的時候使用RGB涵蓋的資訊比較多，也通常會比較準
 
 ## 顯示圖片
-CV2裡面有支援MATPLOT
-
+以下是怎麼顯示圖片的例子
+```
+cv2.imshow('window's name', img)
+cv2.delay(0) ## stop the window vanishing
+cv2.destoryWindow('window's name') ## release after displying
+```
+cv2本身有支援matplot
+```
+import matplotlib.pyplot as plt
+plt.imshow(img)
+plt.show()
+```
 ## 影像辨識
 ### 單模辨識
 ### 多模辨識
