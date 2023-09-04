@@ -3,13 +3,15 @@
 
 圖像辨識的部分我們會使用到pyautogui跟CV2的包
 
+抓圖用Grabimage
+
 pyautigui主要是控制滑鼠跟鍵盤的程式，同時也有支援簡單的圖像辨識以配合鼠鍵操作
 
 CV2上我們主要是使用大張的圖像辨識，有一些算法可以幫助我們縮短這個過程
 
 ＃ 前言
 
-這個鬼東西足足花了我三天的時間，有很多時間都是在建立圖像位置跟定位程式
+這個鬼東西足足花了我五天的時間，有很多時間都是在建立圖像位置跟定位程式
 
 先有了一個雛形後再慢慢修細節，兩天都在無限重跑繼續抓蟲
 
@@ -17,7 +19,11 @@ CV2上我們主要是使用大張的圖像辨識，有一些算法可以幫助�
 
 會依照關卡的難度不同，而有不同的難度跟除蟲，跟很多時候有很難掌控的因素
 
+後續試跑又有一些神奇難以預測的BUG，總之不容易
+
 # CV2上手
+
+OpenCV是一個大型的包可以用來處理影像或是圖片的辨識工作
 
 ## CV2安裝
 ```
@@ -54,8 +60,76 @@ plt.imshow(img)
 plt.show()
 ```
 ## 影像辨識
+內部有些好用的影像辨識的function，從原理跟實際應用好好介紹一下
 ### 單模辨識
+```
+matchTemplate(InputArray image, InputArray templ, method)
+```
+method裡頭提供六種function
+
+以下演示如何使用對tmpl的搜索
+
+```
+    #模板匹配
+    result = cv2.matchTemplate(img_src, img_templ, method)
+    print('result.shape:',result.shape)
+    print('result.dtype:',result.dtype)
+    #计算匹配位置
+    min_max = cv2.minMaxLoc(result)
+    if method == 0 or method == 1:   #根据不同的模式最佳匹配位置取值方法不同
+        match_loc = min_max[2]
+    else:
+        match_loc = min_max[3]      
+    #注意计算右下角坐标时x坐标要加模板图像shape[1]表示的宽度，y坐标加高度
+    right_bottom = (match_loc[0] + img_templ.shape[1], match_loc[1] + img_templ.shape[0])
+    print('result.min_max:',min_max)
+    print('match_loc:',match_loc)
+    print('right_bottom',right_bottom)
+    #标注位置
+    img_disp = img_src.copy()
+    cv2.rectangle(img_disp, match_loc,right_bottom, (0,255,0), 5, 8, 0 )
+    cv2.normalize( result, result, 0, 255, cv2.NORM_MINMAX, -1 )
+    cv2.circle(result, match_loc, 10, (255,0,0), 2 )
+```
+其中，result記錄著所有匹配的搜尋結果
+
+此處再利用minMaxLoc的函數把最匹配的結果拉出來
+
+找到的座標相當於是圖的左上角，加上tmple圖片的大小可以拿到圖片的右下角
+
+我們可以再利用rectangle函數繪製找到的區域
+
 ### 多模辨識
+
+有時候我們希望把符合的所有結果都標出來，這邊我們有很多種做法
+
+方法一：我們設定一個theshold來把符合的圖片抓出來
+
+```
+val,result = cv2.threshold(result_t,0.9,1.0,cv2.THRESH_BINARY)
+match_locs = cv2.findNonZero(result)
+print('match_locs.shape:',match_locs.shape) 
+print('match_locs:\n',match_locs)
+```
+
+假如打印出來
+
+```
+match_locs.shape: (7, 1, 2)
+match_locs:
+ [[[523  96]]
+ [[524  96]]
+ [[471 145]]
+ [[471 146]]
+ [[471 195]]
+ [[154 244]]
+ [[154 245]]]
+```
+找到了七個點，但事實上只有四個
+
+我們可以再利用tmple圖片的大小，把重複的砍掉就行了
+
+
 ＃ 成果
 策略：CODE主要分兩塊，一塊是根據圖片辨識來按按鈕，另外一塊是如果圖片辨識失敗就點預先設好的絕對位置。
 
