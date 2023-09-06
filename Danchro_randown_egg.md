@@ -186,7 +186,55 @@ cv2.destroyAllWindows()
 
 這邊會建立辨識場景，辨識是否在抽選結果頁面，不在的話就點來跳頁
 
-可以根據個人需求設置停止點
+<div align=center><img src="https://raw.githubusercontent.com/fluttering13/Project-recongnition/main/Danchro_random_egg/pic/sce.png" width="300px"/></div
+
+可以根據個人需求設置停止點，因為每個人視窗大小不同，當圖片辨識沒看到的時候就直接點螢幕
+
+這邊要自己再打座標進去
+
+```
+def click_yes():
+    try:
+        buttonLocation = pyautogui.locateOnScreen(yes_path, confidence=0.9)
+        button_center = pyautogui.center(buttonLocation)
+        btnX, btnY = button_center
+    except:
+        #print('yes error')
+        button_center=(977,647)
+    pyautogui.moveTo(button_center, duration = 0.5)
+    pyautogui.click(button_center)
+
+def click_restart():
+    try:
+        buttonLocation = pyautogui.locateOnScreen(restart_path, confidence=0.8)
+        button_center = pyautogui.center(buttonLocation)
+        btnX, btnY = button_center
+        pyautogui.moveTo(button_center, duration = 1)
+        pyautogui.click(button_center)
+    except:
+        #print('arrow_error, use the defeaut corridinate')          
+        pyautogui.moveTo(613, 842, duration = 1)
+        pyautogui.click(clicks=1)
+
+def click_skip():
+    try:
+        buttonLocation = pyautogui.locateOnScreen(skip_path, confidence=0.8)
+        button_center = pyautogui.center(buttonLocation)
+        btnX, btnY = button_center
+        pyautogui.moveTo(button_center, duration = 1)
+        pyautogui.click(button_center)
+    except:
+        #print('arrow_error, use the defeaut corridinate')          
+        pyautogui.moveTo(1375, 96, duration = 1)
+        pyautogui.click(clicks=1)
+
+def all_process():
+    click_restart()
+    time.sleep(1)
+    click_yes()
+    time.sleep(1)
+    click_skip()
+```
 
 4張以上：100至200重刷抽出一次
 
@@ -212,3 +260,4 @@ def send_message():
 ```
 這邊是附加功能，先進到Line notify 頁面登入設置權杖
 再利用以下的code就可以傳訊息給自己嚕！
+<div align=center><img src="https://raw.githubusercontent.com/fluttering13/Project-recongnition/main/Danchro_random_egg/pic/line_pic.png" width="300px"/></div
