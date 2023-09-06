@@ -139,6 +139,7 @@ PS:絕對位置不好設就先抓其他的絕對位置在抓相對位置
 
 要考慮一些留白或是多餘的動作來避免最糟糕的事情發生
 ## 自動轉蛋與辨識UR
+<div align=center><img src="https://raw.githubusercontent.com/fluttering13/Project-recongnition/main/Danchro_random_egg/pic/test.png" width="300px"/></div
 這部分是最舒服的，由於遊戲內有無限首刷，操作過程就是幾個按鈕的事情
 這邊會建立辨識場景，辨識是否在抽選結果頁面，不在的話就點來跳頁
 可以根據個人需求設置停止點
