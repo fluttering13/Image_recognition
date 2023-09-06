@@ -139,13 +139,76 @@ PS:絕對位置不好設就先抓其他的絕對位置在抓相對位置
 
 要考慮一些留白或是多餘的動作來避免最糟糕的事情發生
 ## 自動轉蛋與辨識UR
+
 <div align=center><img src="https://raw.githubusercontent.com/fluttering13/Project-recongnition/main/Danchro_random_egg/pic/test.png" width="300px"/></div
+
+首先我們建立CODE,這裡我們使用Non-Maximum Suppression 來刪除那些被判定是同個位置的圖片
+```
+file_path='./Danchro_random_egg/pic/test.png'
+ur_path='./Danchro_random_egg/pic/ur.png'
+new_img_path='./Danchro_random_egg/pic/new_img.png'
+screen = cv2.imread(file_path)
+template =  cv2.imread(ur_path)
+image_x, image_y = template.shape[:2]  
+result = cv2.matchTemplate(screen, template, cv2.TM_CCOEFF_NORMED)
+
+### Filter results to only good ones
+threshold = 0.7 # Larger values have less, but better matches.
+(yCoords, xCoords) = np.where(result >= threshold)
+
+### Perform non-maximum suppression.
+template_h, template_w = template.shape[:2]
+rects = []
+for (x, y) in zip(xCoords, yCoords):
+    rects.append((x, y, x + template_w, y + template_h))
+    pick = non_max_suppression(np.array(rects))
+# Optional: Visualize the results
+
+for (startX, startY, endX, endY) in pick:
+    new_img=cv2.rectangle(screen, (startX, startY), (endX, endY),(0, 255, 0), 2)
+    obj_number=len(pick)
+
+#new_img.save(new_img_path)
+cv2.imshow('My Image', new_img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+```
+
+<div align=center><img src="https://raw.githubusercontent.com/fluttering13/Project-recongnition/main/Danchro_random_egg/pic/new_img.png" width="300px"/></div
+
+看一下結果
+
+```
+2
+```
 這部分是最舒服的，由於遊戲內有無限首刷，操作過程就是幾個按鈕的事情
+
 這邊會建立辨識場景，辨識是否在抽選結果頁面，不在的話就點來跳頁
+
 可以根據個人需求設置停止點
+
 4張以上：100至200重刷抽出一次
+
 5張以上：1000次重刷抽出一次
+
 四張是比較可以接受的範圍抽一次大約需要40秒,大概幾個小時就可以收竿一次，看是不是自己目標的角色
 ## Line通知
+```
+def send_message():
+    # LINE Notify 權杖
+    token = 'your_token_code'
+
+    # 要發送的訊息
+    message = '抽到了，好了！'
+
+    # HTTP 標頭參數與資料
+    headers = { "Authorization": "Bearer " + token }
+    data = { 'message': message }
+
+    # 以 requests 發送 POST 請求
+    requests.post("https://notify-api.line.me/api/notify",
+        headers = headers, data = data)
+```
 這邊是附加功能，先進到Line notify 頁面登入設置權杖
 再利用以下的code就可以傳訊息給自己嚕！
