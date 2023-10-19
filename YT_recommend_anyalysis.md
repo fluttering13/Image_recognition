@@ -423,6 +423,8 @@ vedio.write_videofile(path+url_str+'_final_edit'+'.mp4',temp_audiofile="temp-aud
 
 [![大業配時代]](./YT_analysis/vedio_tmp/LUaYe_7cmxQ_final_edit.mp4 "大業配時代")
 
+https://github.com/fluttering13/Project-recongnition/blob/main/YT_analysis/vedio_tmp/LUaYe_7cmxQ_final_edit.mp4
+
 第一段是主角們茫然發現沒寫劇本
 
 第二段導演拿了蟑欲絕的畫面順便荒謬進入界配畫面
@@ -434,6 +436,9 @@ vedio.write_videofile(path+url_str+'_final_edit'+'.mp4',temp_audiofile="temp-aud
 <source src="./YT_analysis/vedio_tmp/_wH5lSI5Dgw_final_edit.mp4" type="video/mp4">
 
 [![贖罪之路]](./YT_analysis/vedio_tmp/_wH5lSI5Dgw_final_edit.mp4 "贖罪之路")
+
+https://github.com/fluttering13/Project-recongnition/blob/main/YT_analysis/vedio_tmp/_wH5lSI5Dgw_final_edit.mp4
+
 第一段是女主角與男主角的互動
 
 第二段是女主角的哭戲
@@ -447,6 +452,8 @@ vedio.write_videofile(path+url_str+'_final_edit'+'.mp4',temp_audiofile="temp-aud
 
 
 [![黃金三兄弟]](./YT_analysis/vedio_tmp/obqrIjodgWY_final_edit.mp4 "黃金三兄弟")
+
+https://github.com/fluttering13/Project-recongnition/blob/main/YT_analysis/vedio_tmp/./YT_analysis/vedio_tmp/obqrIjodgWY_final_edit.mp4
 
 第一段是大哥的訓導
 
