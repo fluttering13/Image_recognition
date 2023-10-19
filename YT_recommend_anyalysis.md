@@ -418,12 +418,7 @@ vedio.write_videofile(path+url_str+'_final_edit'+'.mp4',temp_audiofile="temp-aud
 這邊我們藉由上述的演算法，來體驗一下在這樣演算法中看到的元素有什麼
 ## 大業配時代
 
-
-<source src="./YT_analysis/vedio_tmp/LUaYe_7cmxQ_final_edit.mp4" type="video/mp4">
-
-[![大業配時代]](./YT_analysis/vedio_tmp/LUaYe_7cmxQ_final_edit.mp4 "大業配時代")
-
-https://github.com/fluttering13/Project-recongnition/blob/main/YT_analysis/vedio_tmp/LUaYe_7cmxQ_final_edit
+https://youtu.be/lgH9CSJG9-0
 
 第一段是主角們茫然發現沒寫劇本
 
@@ -433,11 +428,7 @@ https://github.com/fluttering13/Project-recongnition/blob/main/YT_analysis/vedio
 
 ## 贖罪之路
 
-<source src="./YT_analysis/vedio_tmp/_wH5lSI5Dgw_final_edit.mp4" type="video/mp4">
-
-[![贖罪之路]](./YT_analysis/vedio_tmp/_wH5lSI5Dgw_final_edit.mp4 "贖罪之路")
-
-https://github.com/fluttering13/Project-recongnition/blob/main/YT_analysis/vedio_tmp/_wH5lSI5Dgw_final_edit
+https://youtu.be/IDWBl9utPZE
 
 第一段是女主角與男主角的互動
 
@@ -447,13 +438,7 @@ https://github.com/fluttering13/Project-recongnition/blob/main/YT_analysis/vedio
 
 ## 黃金三兄弟
 
-
-<source src="./YT_analysis/vedio_tmp/obqrIjodgWY_final_edit.mp4" type="video/mp4">
-
-
-[![黃金三兄弟]](./YT_analysis/vedio_tmp/obqrIjodgWY_final_edit.mp4 "黃金三兄弟")
-
-https://github.com/fluttering13/Project-recongnition/blob/main/YT_analysis/vedio_tmp/./YT_analysis/vedio_tmp/obqrIjodgWY_final_edit
+https://youtu.be/SDII18p6Esw
 
 第一段是大哥的訓導
 
