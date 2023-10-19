@@ -418,7 +418,10 @@ vedio.write_videofile(path+url_str+'_final_edit'+'.mp4',temp_audiofile="temp-aud
 這邊我們藉由上述的演算法，來體驗一下在這樣演算法中看到的元素有什麼
 ## 大業配時代
 
-<video src="./YT_analysis/vedio_tmp/LUaYe_7cmxQ_final_edit.mp4" controls="controls" width="500" height="300"></video>
+
+<source src="./YT_analysis/vedio_tmp/LUaYe_7cmxQ_final_edit.mp4" type="video/mp4">
+
+[![大業配時代]](./YT_analysis/vedio_tmp/LUaYe_7cmxQ_final_edit.mp4 "大業配時代")
 
 第一段是主角們茫然發現沒寫劇本
 
@@ -427,8 +430,10 @@ vedio.write_videofile(path+url_str+'_final_edit'+'.mp4',temp_audiofile="temp-aud
 第三段是終於導演身上都充滿了業配商品
 
 ## 贖罪之路
-<video src="./YT_analysis/vedio_tmp/_wH5lSI5Dgw_final_edit.mp4" controls="controls" width="500" height="300"></video>
 
+<source src="./YT_analysis/vedio_tmp/_wH5lSI5Dgw_final_edit.mp4" type="video/mp4">
+
+[![贖罪之路]](./YT_analysis/vedio_tmp/_wH5lSI5Dgw_final_edit.mp4 "贖罪之路")
 第一段是女主角與男主角的互動
 
 第二段是女主角的哭戲
@@ -436,7 +441,13 @@ vedio.write_videofile(path+url_str+'_final_edit'+'.mp4',temp_audiofile="temp-aud
 第三段是樂咖進入了茫然模式
 
 ## 黃金三兄弟
-<video src="./YT_analysis/vedio_tmp/obqrIjodgWY_final_edit.mp4" controls="controls" width="500" height="300"></video>
+
+
+<source src="./YT_analysis/vedio_tmp/obqrIjodgWY_final_edit.mp4" type="video/mp4">
+
+
+[![黃金三兄弟]](./YT_analysis/vedio_tmp/obqrIjodgWY_final_edit.mp4 "黃金三兄弟")
+
 第一段是大哥的訓導
 
 第二段是繼續被訓
