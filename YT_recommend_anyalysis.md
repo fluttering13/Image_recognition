@@ -423,7 +423,7 @@ vedio.write_videofile(path+url_str+'_final_edit'+'.mp4',temp_audiofile="temp-aud
 
 [![大業配時代]](./YT_analysis/vedio_tmp/LUaYe_7cmxQ_final_edit.mp4 "大業配時代")
 
-https://github.com/fluttering13/Project-recongnition/blob/main/YT_analysis/vedio_tmp/LUaYe_7cmxQ_final_edit.mp4
+https://github.com/fluttering13/Project-recongnition/blob/main/YT_analysis/vedio_tmp/LUaYe_7cmxQ_final_edit
 
 第一段是主角們茫然發現沒寫劇本
 
@@ -437,7 +437,7 @@ https://github.com/fluttering13/Project-recongnition/blob/main/YT_analysis/vedio
 
 [![贖罪之路]](./YT_analysis/vedio_tmp/_wH5lSI5Dgw_final_edit.mp4 "贖罪之路")
 
-https://github.com/fluttering13/Project-recongnition/blob/main/YT_analysis/vedio_tmp/_wH5lSI5Dgw_final_edit.mp4
+https://github.com/fluttering13/Project-recongnition/blob/main/YT_analysis/vedio_tmp/_wH5lSI5Dgw_final_edit
 
 第一段是女主角與男主角的互動
 
@@ -453,7 +453,7 @@ https://github.com/fluttering13/Project-recongnition/blob/main/YT_analysis/vedio
 
 [![黃金三兄弟]](./YT_analysis/vedio_tmp/obqrIjodgWY_final_edit.mp4 "黃金三兄弟")
 
-https://github.com/fluttering13/Project-recongnition/blob/main/YT_analysis/vedio_tmp/./YT_analysis/vedio_tmp/obqrIjodgWY_final_edit.mp4
+https://github.com/fluttering13/Project-recongnition/blob/main/YT_analysis/vedio_tmp/./YT_analysis/vedio_tmp/obqrIjodgWY_final_edit
 
 第一段是大哥的訓導
 
