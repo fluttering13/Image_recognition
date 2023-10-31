@@ -1,9 +1,25 @@
 # Project-recongnition
 這邊就放一些跟我覺得有趣的實作，有時候還還沒完全完工，忍一下。
 
+或是有些不知道要放哪裡的side-project也會放這
+
+
+# CPGAN 壓縮隱私生成式對抗網路
+
+<div align=center><img src="./CPGAN_example/pic/CPGAN_STRUCT.png" width="500px"/></div>
+
+隨著大數據時代的發展，數據隱私的問題也逐漸浮現出來
+
+如何對數據進行加密，並還能保持一定的可利用性都是一個問題
+
+這篇實作是利用 CPGAN 來找一種對資料加密的演算法，並可以找到好的可利用性，主要是復現以下這篇文章
+
+B. -W. Tseng and P. -Y. Wu, "Compressive Privacy Generative Adversarial Network," in IEEE Transactions on Information Forensics and Security, vol. 15
+
+
 
 # YT_recommend_anyalysis
-<div align=center><img src="./YT_analysis/wc_tf_idf_from_all_bi_word.png" width="300px"/></div>
+<div align=center><img src="./YT_analysis/wc_tf_idf_from_all_bi_word.png" width=275px"/></div>
 
 此處以YT「反正我很閒」，觀眾的回覆與影片的內容為資訊來源
 

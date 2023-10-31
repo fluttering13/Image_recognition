@@ -484,6 +484,8 @@ subprocess.call(['ffmpeg', '-i', file_path, new_file_path])
 但效果不一定robust，可能比較好的做法是針對這個YT角色的聲音再去做fine-tune
 
 這邊我們直接使用這個包，或是不做去噪這個步驟
+
+愛心提示VoiceFixer：pip install librosa==0.9.2 不要用最新的 (作者的包都太舊了)
 ```
 from voicefixer import VoiceFixer, Vocoder
 
