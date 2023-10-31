@@ -30,6 +30,16 @@ YT影片精華摘取-最大觀看回顧：YT連結獲取爬蟲+最大回顧爬�
 YT影片內容摘要：YT聲音爬蟲+(人聲強化)+聲音轉文字+(文檔糾錯)+字頻分析
 
 
+# Customer-Churn
+資料集來源取至Kaggle:Telco Customer Churn
+
+從IBM服務的資料中可以看到顧客率流失率很高
+
+從一些簡單的圖表可以做初步原因的面向探討
+
+嚴謹一點可以使用統計檢驗與因果推斷
+
+
 # Danchro_randown_egg
 有些遊戲就是需要好一點的首抽開局才會玩得開心
 
@@ -42,3 +52,4 @@ YT影片內容摘要：YT聲音爬蟲+(人聲強化)+聲音轉文字+(文檔糾�
 註：這裡只有教學如何寫code
 
 <div align=center><img src="https://raw.githubusercontent.com/fluttering13/Project-recongnition/main/Danchro_random_egg/pic/new_img.png" width="400px"/></div>
+
