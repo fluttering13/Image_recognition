@@ -348,11 +348,11 @@ pickle.dump(dic, fp)
 
 這邊的trail是指每一個trail 裡面等到分類器跟重建器都收斂，再更新一次加密器
 
-<div align=center><img src="./CPGAN_example/pic/training_loss.png" width="500px"/></div>
+<div align=center><img src="./CPGAN_example/pic/loss.png" width="500px"/></div>
 
 再看看ACC的表現怎麼樣，就算一開始沒有找到很好的ACC的點，這個演算法也會幫助找到比較，也許是重建的概念是可以幫助圖片辨識有更好的表現，但隨著重建數據的難度越高，ACC其實也因為可利用性降低而下降。
 
-<div align=center><img src="./CPGAN_example/pic/training-acc.png" width="500px"/></div>
+<div align=center><img src="./CPGAN_example/pic/acc.png" width="500px"/></div>
 
 ## 訓練結果
 我們可以對照一下paper內的Theoretical 結果
