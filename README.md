@@ -39,6 +39,8 @@ YT影片內容摘要：YT聲音爬蟲+(人聲強化)+聲音轉文字+(文檔糾�
 
 嚴謹一點可以使用統計檢驗與因果推斷
 
+這邊也順便做了SVM + Auto machine learning來調參
+
 
 # Danchro_randown_egg
 有些遊戲就是需要好一點的首抽開局才會玩得開心
