@@ -17,11 +17,12 @@ CPGAN_load.py：載入檔案用的
 
 ## 差分隱私
 
-對於某個鄰集$D_1$跟$D_2$，我們使用加密算法 $\mathscr{A}$，兩個set之間的差距為$e^\epsilon$
+對於某個鄰集 $D_1$跟 $D_2$，我們使用加密算法 $\mathscr{A}$，兩個set之間的差距為$e^\epsilon$
 
 $\epsilon$越趨近於0，代表我們對於兩個鄰集無法辨認的程度越高
 
 也就是無法獲得更多的資訊，代表隱私保護程度越高
+
 $$
 \mathbb{P}\left[\mathscr{A}\left(D_1\right) \in S\right] \leq e^\epsilon \mathbb{P}\left[\mathscr{A}\left(D_2\right) \in S\right]
 $$
@@ -345,7 +346,10 @@ pickle.dump(dic, fp)
 這是一件我們希望看的到事情，我們會想找到某種加密的function，隨著訓練的開始，重建的難度越高，才是一個好的隱私加密模式。
 
 這邊的trail是指每一個trail 裡面等到分類器跟重建器都收斂，再更新一次加密器
+
 <div align=center><img src="./CPGAN_example/pic/training_loss.png" width="500px"/></div>
+
+再看看ACC的表現怎麼樣，就算一開始沒有找到很好的ACC的點，這個演算法也會幫助找到比較，也許是重建的概念是可以幫助圖片辨識有更好的表現，但隨著重建數據的難度越高，ACC其實也因為可利用性降低而下降。
 
 <div align=center><img src="./CPGAN_example/pic/train_acc.png" width="500px"/></div>
 
