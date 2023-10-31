@@ -17,7 +17,7 @@ CPGAN_load.py：載入檔案用的
 
 ## 差分隱私
 
-對於某個鄰集 $D_1$跟 $D_2$，我們使用加密算法 $\mathscr{A}$，兩個set之間的差距為$e^\epsilon$
+對於某個鄰集 $D_1$跟 $D_2$，我們使用加密算法 $\mathscr{A}$，兩個set之間的差距為 $e^\epsilon$
 
 $\epsilon$越趨近於0，代表我們對於兩個鄰集無法辨認的程度越高
 
@@ -63,7 +63,7 @@ B. -W. Tseng and P. -Y. Wu, "Compressive Privacy Generative Adversarial Network,
 所以triple loss的定義為前者扣掉後者
 
 
-誤差函數使用cross entropy跟輸出$\mathbf{z}_i$跟分類$\mathbf{y}_i$之間的距離
+誤差函數使用cross entropy跟輸出 $\mathbf{z}_i$ 跟分類 $\mathbf{y}_i$ 之間的距離
 
 $$
 L_{util}=-\frac{1}{m} \sum_{i=1}^m \log P_f\left(\mathbf{y}_i \mid \mathbf{z}_i\right)
@@ -73,11 +73,12 @@ $$
 
 ### 再來是重構器：輸入這些數字，輸出為最一開始的input
 
-輸入為code，輸出為$\hat{\mathbf{x}}$與原來的圖片$\mathbf{x}$作為對照
+輸入為code，輸出為 $\hat{\mathbf{x}}$ 與原來的圖片 $\mathbf{x}$ 作為對照
 
 這邊使用的loss function選用Linear Ridge Regression
 
 可以收斂到一個global solution
+
 $$
 L_{a d v}^{L R R}=\frac{1}{m} \sum_{i=1}^m\left\|\hat{\mathbf{x}}_{i, L R R}-\mathbf{x}_i\right\|_2^2
 $$
@@ -351,7 +352,7 @@ pickle.dump(dic, fp)
 
 再看看ACC的表現怎麼樣，就算一開始沒有找到很好的ACC的點，這個演算法也會幫助找到比較，也許是重建的概念是可以幫助圖片辨識有更好的表現，但隨著重建數據的難度越高，ACC其實也因為可利用性降低而下降。
 
-<div align=center><img src="./CPGAN_example/pic/train_acc.png" width="500px"/></div>
+<div align=center><img src="./CPGAN_example/pic/training-acc.png" width="500px"/></div>
 
 ## 訓練結果
 我們可以對照一下paper內的Theoretical 結果
