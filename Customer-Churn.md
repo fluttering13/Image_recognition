@@ -53,7 +53,7 @@ for name in columns:
 Index: []
 Empty DataFrame
 ```
-看來裡面的資料都是填好填滿
+看來裡面的資料都是填好填滿，但是index的部分可能要填補
 
 再來來粗略看一下有多少feature，再來決定等等要使用encoding的方式
 
@@ -319,4 +319,196 @@ Best score: 0.8197303051809794
 ```
 Best trial parameters: {'C': 79.26227943687404, 'degree': 3, 'kernel': 'poly'}
 Best score: 0.9453513129879347
+```
+
+# 同場加映，因果推斷之干預
+
+我們做完前面的多變數分析之後，大部分我們還是利用眼睛去看
+
+但有時候我們會被correlation跟confounding factor所蒙蔽
+
+每個月用戶的消費力會影響到我們要看的tenure 也許也會與partner，payment way有關 
+
+我們可以先假設我們的因果關係是長成下面這張圖
+<div align=center><img src="./Customer-Churn/pic/c1.png" width="400px"/></div>  
+
+再來我們想作的事情是打斷這個鍵結，想要知道的是我們想看的tenure, partner......多會影響到最後的churn
+
+<div align=center><img src="./Customer-Churn/pic/c2.png" width="400px"/></div> 
+
+這邊我們作的方法是作intervention，不熟悉的可以看下面
+
+https://github.com/fluttering13/Causal-models/blob/main/Thompson_paradox_and_intervention.md
+
+```
+def create_intervention_AB(data_number,data_dead_number):
+
+    data_number=data_number.assign(total=data_number.sum(axis=1))
+    data_dead_number=data_dead_number.assign(total=data_dead_number.sum(axis=1))
+
+    indexes=data_number.index
+    data_rates=data_dead_number/data_number
+
+    data_rates=data_rates.rename(columns={'total':'correlation'})
+
+
+    new_list=[]
+    c_numbers=data_number.sum()
+    for i in range(data_rates.shape[0]):
+        tmp_sum=0
+        for j in range(data_rates.shape[1]-1):
+            E_y_given_t_c=data_rates.iloc[i,j]
+            p_c=c_numbers.iloc[j]/c_numbers.iloc[-1]
+            tmp_sum=tmp_sum+E_y_given_t_c*p_c
+        new_list.append(tmp_sum)
+    new_list=pd.DataFrame({'intervention':new_list},index=indexes)
+    data_rates=pd.concat([data_rates,new_list],axis=1)
+
+    return data_rates
+```
+
+跟上面一樣使用這個function input一個是實驗的總數，另外一個是實驗中要看的數值
+
+以這個例子來說，就是分別做tenure、Partner，我們總共做三個實驗
+
+對於連續變數，我們就用平均值來分組，
+
+表格裡面的值代表條件機率
+
+h_MC代表大於MC平均，l_MC代表小於MC平均
+
+以tenure的index來說：0代表大於tenure平均 1則是小於
+
+以partner的index來說：0代表單身 1則是有伴
+
+以payment的index來說，0到3分別為：
+
+['Electronic check' 'Mailed check' 'Bank transfer (automatic)' 'Credit card (automatic)']
+
+```
+MC_ave=data_pd_numberical['MonthlyCharges'].mean()
+
+# data_pd_numberical['tenure']=pd.to_numeric(data_pd_numberical['tenure'])
+
+def tenure_causal_test():
+    ave=data_pd_numberical['tenure'].mean()
+
+    cond_list=[]  
+    cond_list.append((data_pd_numberical['tenure']>=ave) & (data_pd_numberical['MonthlyCharges']>=MC_ave))
+    cond_list.append((data_pd_numberical['tenure']>=ave) & (data_pd_numberical['MonthlyCharges']<MC_ave))
+    cond_list.append((data_pd_numberical['tenure']<ave) & (data_pd_numberical['MonthlyCharges']>=MC_ave))
+    cond_list.append((data_pd_numberical['tenure']<ave) & (data_pd_numberical['MonthlyCharges']<MC_ave))
+
+    cond_list2=[]  
+    cond_list2.append((data_pd_numberical['tenure']>=ave) & (data_pd_numberical['MonthlyCharges']>=MC_ave) & (data_pd_numberical['Churn']==1))
+    cond_list2.append((data_pd_numberical['tenure']>=ave) & (data_pd_numberical['MonthlyCharges']<MC_ave) & (data_pd_numberical['Churn']==1))
+    cond_list2.append((data_pd_numberical['tenure']<ave) & (data_pd_numberical['MonthlyCharges']>=MC_ave) & (data_pd_numberical['Churn']==1))
+    cond_list2.append((data_pd_numberical['tenure']<ave) & (data_pd_numberical['MonthlyCharges']<MC_ave) & (data_pd_numberical['Churn']==1))
+
+
+
+    highMC_list=[]
+    lowMC_list=[]
+    highMC_list.append(data_pd_numberical[cond_list[0]]['customerID'].count())
+    highMC_list.append(data_pd_numberical[cond_list[2]]['customerID'].count())
+    lowMC_list.append(data_pd_numberical[cond_list[1]]['customerID'].count())
+    lowMC_list.append(data_pd_numberical[cond_list[3]]['customerID'].count())
+    highMC_list2=[]
+    lowMC_list2=[]
+    highMC_list2.append(data_pd_numberical[cond_list2[0]]['customerID'].count())
+    highMC_list2.append(data_pd_numberical[cond_list2[2]]['customerID'].count())
+    lowMC_list2.append(data_pd_numberical[cond_list2[1]]['customerID'].count())
+    lowMC_list2.append(data_pd_numberical[cond_list2[3]]['customerID'].count())
+
+
+    total_df=Df({'h_MC':highMC_list,'l_MC':lowMC_list})
+    df=Df({'h_MC':highMC_list2,'l_MC':lowMC_list2})
+
+    data_rates=create_intervention_AB(total_df,df)
+    print(data_rates)
+
+
+
+def partner_causal_test():
+    cond_list=[]  
+    cond_list.append((data_pd_numberical['Partner']==1) & (data_pd_numberical['MonthlyCharges']>=MC_ave))
+    cond_list.append((data_pd_numberical['Partner']==1) & (data_pd_numberical['MonthlyCharges']<MC_ave))
+    cond_list.append((data_pd_numberical['Partner']==0) & (data_pd_numberical['MonthlyCharges']>=MC_ave))
+    cond_list.append((data_pd_numberical['Partner']==0) & (data_pd_numberical['MonthlyCharges']<MC_ave))
+
+    cond_list2=[]  
+    cond_list2.append((data_pd_numberical['Partner']==1) & (data_pd_numberical['MonthlyCharges']>=MC_ave)& (data_pd_numberical['Churn']==1))
+    cond_list2.append((data_pd_numberical['Partner']==1) & (data_pd_numberical['MonthlyCharges']<MC_ave)& (data_pd_numberical['Churn']==1))
+    cond_list2.append((data_pd_numberical['Partner']==0) & (data_pd_numberical['MonthlyCharges']>=MC_ave)& (data_pd_numberical['Churn']==1))
+    cond_list2.append((data_pd_numberical['Partner']==0) & (data_pd_numberical['MonthlyCharges']<MC_ave)& (data_pd_numberical['Churn']==1))
+
+    highMC_list=[]
+    lowMC_list=[]
+    highMC_list.append(data_pd_numberical[cond_list[0]]['customerID'].count())
+    highMC_list.append(data_pd_numberical[cond_list[2]]['customerID'].count())
+    lowMC_list.append(data_pd_numberical[cond_list[1]]['customerID'].count())
+    lowMC_list.append(data_pd_numberical[cond_list[3]]['customerID'].count())
+    highMC_list2=[]
+    lowMC_list2=[]
+    highMC_list2.append(data_pd_numberical[cond_list2[0]]['customerID'].count())
+    highMC_list2.append(data_pd_numberical[cond_list2[2]]['customerID'].count())
+    lowMC_list2.append(data_pd_numberical[cond_list2[1]]['customerID'].count())
+    lowMC_list2.append(data_pd_numberical[cond_list2[3]]['customerID'].count())
+
+
+    total_df=Df({'h_MC':highMC_list,'l_MC':lowMC_list})
+    df=Df({'h_MC':highMC_list2,'l_MC':lowMC_list2})
+
+    data_rates=create_intervention_AB(total_df,df)
+    print(data_rates)
+
+
+def payment_causal_test():
+    cond_list=[]
+    for i in range(4):  
+        cond_list.append((data_pd_numberical['PaymentMethod']==i) & (data_pd_numberical['MonthlyCharges']>=MC_ave))
+        cond_list.append((data_pd_numberical['PaymentMethod']==i) & (data_pd_numberical['MonthlyCharges']<MC_ave))
+    cond_list2=[]
+    for i in range(4):  
+        cond_list2.append((data_pd_numberical['PaymentMethod']==i) & (data_pd_numberical['MonthlyCharges']>=MC_ave)& (data_pd_numberical['Churn']==1))
+        cond_list2.append((data_pd_numberical['PaymentMethod']==i) & (data_pd_numberical['MonthlyCharges']<MC_ave)& (data_pd_numberical['Churn']==1))
+    highMC_list=[]
+    lowMC_list=[]
+    highMC_list2=[]
+    lowMC_list2=[]
+
+    for i in range(0,8,2):
+        highMC_list.append(data_pd_numberical[cond_list[i]]['customerID'].count())
+        highMC_list2.append(data_pd_numberical[cond_list2[i]]['customerID'].count())
+    for i in range(1,8,2):
+        lowMC_list.append(data_pd_numberical[cond_list[i]]['customerID'].count())
+        lowMC_list2.append(data_pd_numberical[cond_list2[i]]['customerID'].count())
+    total_df=Df({'h_MC':highMC_list,'l_MC':lowMC_list})
+    df=Df({'h_MC':highMC_list2,'l_MC':lowMC_list2})
+    data_rates=create_intervention_AB(total_df,df)
+    print(data_rates)
+
+tenure_causal_test()
+partner_causal_test()
+payment_causal_test()
+```
+
+最後我們得到下面的結果，代表說其實跟我們看到correlation的結果差不多
+
+數值間的順位關係沒有改變
+
+這些結果並沒有被混淆因子影響太多
+
+```
+       h_MC      l_MC  correlation  intervention
+0  0.169820  0.048882     0.125153      0.116245
+1  0.539742  0.237846     0.386755      0.406004
+       h_MC      l_MC  correlation  intervention
+0  0.261084  0.101312     0.196649      0.190306
+1  0.435816  0.214531     0.329580      0.337788
+       h_MC      l_MC  correlation  intervention
+0  0.498270  0.328051     0.452854      0.422864
+1  0.299754  0.154357     0.191067      0.235344
+2  0.220994  0.090767     0.167098      0.163305
+3  0.192702  0.097674     0.152431      0.150606
 ```
