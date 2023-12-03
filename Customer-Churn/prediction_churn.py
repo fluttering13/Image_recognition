@@ -10,7 +10,7 @@ import pickle
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report, confusion_matrix
 
-import optuna
+# import optuna
 '''
 Content
 Each row represents a customer, each column contains customer’s attributes described on the column Metadata.
@@ -91,19 +91,19 @@ columns=data_pd.columns
 #     plt.show()
 
 ###specfic selec
-# cond=data_pd['MonthlyCharges']<=20
-# new_df=data_pd[cond]
-# features = ['gender', 'SeniorCitizen', 'Partner', 'Dependents',
-#        'tenure', 'PhoneService', 'MultipleLines', 'InternetService',
-#        'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport',
-#        'StreamingTV', 'StreamingMovies', 'Contract', 'PaperlessBilling',
-#        'PaymentMethod', 'MonthlyCharges', 'TotalCharges']
-# for feature in features:
-#     sns.histplot(data = new_df, x = feature, hue = 'Churn', multiple = 'dodge', bins=30)
-#     plt.title(f'Histogram of {feature} with Churn')
-#     plt.xlabel(feature)
-#     plt.ylabel('Frequency')
-#     plt.show()
+cond=data_pd['MonthlyCharges']<=20
+new_df=data_pd[cond]
+features = ['gender', 'SeniorCitizen', 'Partner', 'Dependents',
+       'tenure', 'PhoneService', 'MultipleLines', 'InternetService',
+       'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport',
+       'StreamingTV', 'StreamingMovies', 'Contract', 'PaperlessBilling',
+       'PaymentMethod', 'MonthlyCharges', 'TotalCharges']
+for feature in features:
+    sns.histplot(data = new_df, x = feature, hue = 'Churn', multiple = 'dodge', bins=30)
+    plt.title(f'Histogram of {feature} with Churn')
+    plt.xlabel(feature)
+    plt.ylabel('Frequency')
+    plt.show()
 
 ## drop useless col
 # data_pd.drop(columns=["customerID"], inplace=True)

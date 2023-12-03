@@ -213,7 +213,7 @@ for feature in features:
 ```
 1. 從持占率裡面看更慘了
 <div align=center><img src="./Customer-Churn/pic/his_s2ten.png" width="400px"/></div>
-2. 從有續約的群體可見以mail checked為大宗
+2. 從便宜資費的群體可見以mail checked為大宗
    
 也許可以改善郵件推廣作為著手點出發
 

@@ -1,8 +1,24 @@
-# Project-recongnition
-這邊就放一些跟我覺得有趣的實作，有時候還還沒完全完工，忍一下。
+# Projects-demonstration
+這邊就放一些跟我覺得有趣的實作，演示一些做過的一些作品
 
-或是有些不知道要放哪裡的side-project也會放這
+更詳盡的內容可以在同頁面的欄目在點進去看code的細節
 
+# Anomaly detection 實作 (AnomalyLib)
+
+<div align=center><img src="./Detection/pic/pic1.png" width=800px"/></div>
+
+在訓練集只有正資料集的狀況，透過一些Anomaly map的方式，抓出那些與正資料集不同的區塊
+
+以上是實作AnomalyLib的套件，利用PADIM model抓出那些看到異常的部分
+
+
+# 因果分析實戰-旅館訂房分析
+
+<div align=center><img src="./Dowhy/Booking_cancellation/pic1.png" width=800px"/></div>
+
+這裡是利用Dowhy因果模型套件來對實例進行因果推斷
+
+主要可以排除混淆因子所造成的影響，抓出主要有因果關係的因素有那些
 
 # CPGAN 壓縮隱私生成式對抗網路
 

@@ -73,9 +73,7 @@ for i in range(len(contours)):
         ave=sum(length_list)/len(length_list)
         diff_list=[abs(length_list[i]-ave) for i in range(len(length_list))] 
         print(sum(diff_list)/len(diff_list)/ave)
-        if sum(diff_list)/len(diff_list)/ave<circle_threshold:
-            print('circle')
-            cv2.putText(draw_img, 'circle', (int(center_x-20),int(center_y)), cv2.FONT_HERSHEY_TRIPLEX,0.5, (0, 0, 255), 1, cv2.LINE_AA)
+
         ###eclipse detection
         semi_major_axis_length=max(length_list)
         semi_minor_axis_length=min(length_list)
@@ -87,12 +85,17 @@ for i in range(len(contours)):
         focal_2=center-(V_1-center)*(focal_length/semi_major_axis_length)
 
         ellipse_radius_list=[np.sqrt(sum(sum((c[i]-focal_1)**2)))+np.sqrt(sum(sum((c[i]-focal_2)**2))) for i in range(len(c))]
-        ave=sum(ellipse_radius_list)/len(ellipse_radius_list)
-        diff_list=[abs(ellipse_radius_list[i]-ave) for i in range(len(length_list))] 
-        if sum(diff_list)/len(diff_list)/ave<ellipse_threshold:
+        ave2=sum(ellipse_radius_list)/len(ellipse_radius_list)
+        diff_list2=[abs(ellipse_radius_list[i]-ave2) for i in range(len(length_list))] 
+        print('ec_value',sum(diff_list2)/len(diff_list2)/ave2)
+        if sum(diff_list)/len(diff_list)/ave<circle_threshold:
+            print('circle')
+            cv2.putText(draw_img, 'circle', (int(center_x-20),int(center_y)), cv2.FONT_HERSHEY_TRIPLEX,0.5, (0, 0, 255), 1, cv2.LINE_AA) 
+        if sum(diff_list2)/len(diff_list2)/ave2<ellipse_threshold:
             print('ellipse')
             cv2.putText(draw_img, 'ellipse', (int(center_x-20),int(center_y)+20), cv2.FONT_HERSHEY_TRIPLEX,0.5, (0, 0, 255), 1, cv2.LINE_AA)
-
+        else:
+            cv2.putText(draw_img, 'other', (int(center_x-20),int(center_y)), cv2.FONT_HERSHEY_TRIPLEX,0.5, (0, 0, 255), 1, cv2.LINE_AA) 
         # cv2.circle(draw_img,(int(center[0][0]),int(center[0][1])),5,(0, 0, 255),-1)
         # cv2.circle(draw_img,(int(focal_1[0][0]),int(focal_1[0][1])),5,(0, 255, 0),-1)
         # cv2.circle(draw_img,(int(focal_2[0][0]),int(focal_2[0][1])),5,(0, 255, 0),-1)
