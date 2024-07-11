@@ -70,7 +70,7 @@ def weights_init(net, init_type='normal', init_gain=0.02):
         elif classname.find('BatchNorm2d') != -1:
             torch.nn.init.normal_(m.weight.data, 1.0, 0.02)
             torch.nn.init.constant_(m.bias.data, 0.0)
-    print('initialize network with %s type' % init_type)
+    #print('initialize network with %s type' % init_type)
     net.apply(init_func)
 
 
@@ -111,7 +111,9 @@ acc_list=[]
 ##41,11
 for i in range(1,41):
     for j in range(1,11):
-        data=cv2.imread('./CPGAN_example/pre-process/pic'+str(i)+'_'+str(j)+'.jpg',cv2.IMREAD_GRAYSCALE)
+        #data=plt.imread('att_faces/s{}/{}.pgm'.format(i,j))
+        #data='./CPGAN_example/pre-process/pic'+str(i)+'_'+str(j)+'.jpg'
+        data=cv2.imread('./pre-process/pic'+str(i)+'_'+str(j)+'.jpg',cv2.IMREAD_GRAYSCALE)
         data=data.reshape([1,92,92])/255
         #print(data)
 
@@ -147,6 +149,7 @@ def oracle(index,data,labels,*raw_data):
     if index==0:
         #criterion0 = nn.CrossEntropyLoss()
         #optimizer0 = optim.Adam(classifier.parameters(), lr=0.001,  weight_decay=1e-6)
+
         loss_list=[]
         dif_loss=1
         loss_value=1
@@ -173,7 +176,7 @@ def oracle(index,data,labels,*raw_data):
             count=count+1
             if count>=20000:
                 break
-            
+        breakpoint()
         return  loss0, outputs
 
     elif index==1:
@@ -184,14 +187,14 @@ def oracle(index,data,labels,*raw_data):
         raw_data=raw_data[0]
         raw_data=raw_data.reshape([200,-1])
         img_len=raw_data.shape[1]
-        matrix_sum1=torch.zeros([Encoder_dimension,Encoder_dimension])
-        matrix_sum2=torch.zeros(Encoder_dimension,img_len)
+        matrix_sum1=torch.zeros([Encoder_dimension,Encoder_dimension]).cuda()
+        matrix_sum2=torch.zeros(Encoder_dimension,img_len).cuda()
         for i in range(len(data)):
             vec_z=data[i,:].reshape([-1,1])
             vec_x=raw_data[i,:].reshape([-1,1])
             matrix_sum1=matrix_sum1+vec_z*vec_z.t()
             matrix_sum2=matrix_sum2+vec_z*vec_x.t()
-        W_LRR=torch.matmul(torch.linalg.inv(matrix_sum1/len(data)+ridge_cof*torch.eye(Encoder_dimension)),matrix_sum2/len(data))
+        W_LRR=torch.matmul(torch.linalg.inv(matrix_sum1/len(data)+ridge_cof*torch.eye(Encoder_dimension).cuda()),matrix_sum2/len(data))
 
         x_reconstructed=torch.matmul(W_LRR.t(),data.t())
         loss1=criterion1(x_reconstructed, raw_data.t())
@@ -214,28 +217,33 @@ def oracle(index,data,labels,*raw_data):
 
 ###define the net
 
-encoder = Encoder()
+encoder = Encoder().cuda()
 
-classifier=Classifier()
+classifier=Classifier().cuda()
 
 
 ### define the loss function and optimizer
 ### 0:Classier, 1:constructor
-criterion0 = nn.CrossEntropyLoss()
-criterion1= nn.MSELoss()
+criterion0 = nn.CrossEntropyLoss().cuda()
+criterion1= nn.MSELoss().cuda()
 
 
 optimizer0 = optim.Adam(classifier.parameters(), lr=0.001,  weight_decay=1e-6)
 optimizer2 = optim.Adam(encoder.parameters(), lr=0.001,  weight_decay=1e-6)
 
-raw_data=torch.from_numpy(np.array(raw_train_data)).float().reshape([200,1,92,92])
-raw_data_train=torch.from_numpy(np.array(raw_train_data)).float().reshape([200,1,92,92])
+raw_data=torch.from_numpy(np.array(raw_train_data)).float().reshape([200,1,92,92]).cuda()
+raw_data_train=torch.from_numpy(np.array(raw_train_data)).float().reshape([200,1,92,92]).cuda()
+labels=torch.from_numpy(np.array(train_true)).long().cuda()
+
+test_data=torch.from_numpy(np.array(raw_test_data))
+test_data=test_data.float().reshape([200,1,92,92]).cuda()
 # weights_init(encoder)
 ##############################################
 ####training begin
 err_list=[]
 acc_list=[]
 loss1_list=[]
+count=0
 for j in range(100):
     weights_init(encoder)
     for i in range(100):
@@ -244,18 +252,15 @@ for j in range(100):
         data = encoder(raw_data_train).detach()
         data2= encoder(raw_data_train)       
 
-        labels=torch.from_numpy(np.array(train_true)).long()
-
-
 
 
         loss0, outputs0=oracle(0,data,labels)
 
-        test_data=torch.from_numpy(np.array(raw_test_data))
-        test_data=test_data.float().reshape([200,1,92,92])
-        test_data=encoder(test_data)
 
-        outputs_test=classifier(test_data)
+        code_test_data=encoder(test_data)
+
+
+        outputs_test=classifier(code_test_data)
         label_trained=torch.argmax(outputs0,1)
         label_test=torch.argmax(outputs_test,1)
 
@@ -275,8 +280,12 @@ for j in range(100):
         acc_list.append(acc)
         loss1_list.append(loss_value)      
         dic={'err_list':err_list,'acc_list':acc_list,'loss1_list':loss1_list}
-        fp=open('./CPGAN_example/CPGAN_CNN_d_'+str(Encoder_dimension)+'.pkl', 'wb')
-        pickle.dump(dic, fp)
+        fp=open('./CPGAN_CNN_d_'+str(Encoder_dimension)+'.pkl', 'wb')
+        #pickle.dump(dic, fp)
+        if count%10==0:
+            fp=open('./CPGAN_CNN_d_'+str(Encoder_dimension)+'backup'+'.pkl', 'wb')
+            #pickle.dump(dic, fp)
+        count=count+1
 
 
 

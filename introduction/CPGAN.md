@@ -1,25 +1,28 @@
 # 隱私加密-CPGAN (Compressive Privacy Generative Adversarial Network)
 ## File說明
-face_net.py：檔案的先處理，抓臉部用的
-CPGAN_prototype.py：重建器為NN
+Find_face_by_mtcnn.py：前處理，抓臉部，產生data用的
 CPGAN_CNN.py：重建器為CNN，ACC比較高與穩健，推薦使用
 CPGAN_load.py：載入檔案用的
 
 ## 前言
 
-什麼是隱私加密呢？鑑於現在大數據分析盛行，數據在彼此之間可能會有安全性的隱憂
+什麼是隱私加密呢？鑑於不同的應用場景需求，數據在彼此之間可能會有安全性的隱憂，例如銀行的客戶資料、醫院的病患資料，要解決這個痛點有很多方法與流程，其中一個流程就是做好加密。
 
 例如說醫院手中有病人的病歷、住址、身分證字號，萬一流出去的後果可能會很嚴重
 
-如果只是對數據的主鑑primary key進行加密可能還不夠，因為有其他cross reference還是可以進行數據還原
+有一個比較直覺的方式就是對數據的主鍵primary key (user_id, 身份證字號 之類的) 進行加密可能還不夠，因為有可能再其他的醫院沒有做這件事情，或是透過有相關性的其他欄位去推測，也就是其他的cross reference還是可以進行數據還原。
 
-所以接下來要提到的是差分隱私的概念，如何去定義數據隱私這件事情
+所以接下來要提到的是差分隱私的概念，如何去定義數據隱私這件事情。
+
+這邊先提要一下，加密一定會影響到可利用性，加密相當於把訊息模糊了，也就是欄位的特徵會消失不見，這對回歸問題來說是很不利的，所以要如何取得一個平衡也是一個值得關注的重點。
 
 ## 差分隱私
 
+今天想要知道一個算法它好不好我們就需要定義一下
+
 對於某個鄰集 $D_1$跟 $D_2$，我們使用加密算法 $\mathscr{A}$，兩個set之間的差距為 $e^\epsilon$
 
-$\epsilon$越趨近於0，代表我們對於兩個鄰集無法辨認的程度越高
+$\epsilon$是一個非負參數，其越趨近於0，這個上界就越趨近於1，代表我們對於兩個鄰集無法辨認的程度越高
 
 也就是無法獲得更多的資訊，代表隱私保護程度越高
 
@@ -27,6 +30,7 @@ $$
 \mathbb{P}\left[\mathscr{A}\left(D_1\right) \in S\right] \leq e^\epsilon \mathbb{P}\left[\mathscr{A}\left(D_2\right) \in S\right]
 $$
 
+接下來來介紹在CPGAN是如何去構件這個演算法 $\mathscr{A}$
 
 ## CPGAN
 
@@ -36,9 +40,9 @@ $$
 這邊主要是想用NN的架構來做隱私加密，這邊是把NN的黑盒子當成加密的演算法，輸出就是一串數字
 
 
-在這邊的GAN主要分成加密g跟解密h：
+在這邊的GAN主要分成加密 $g$ 跟解密 $h$
 
-<div align=center><img src="./CPGAN_example/pic/CPGAN_STRUCT.png" width="500px"/></div>
+<div align=center><img src="../CPGAN_example/pic/CPGAN_STRUCT.png" width="500px"/></div>
 
 本文引用，主要介紹並復現這篇的工作
 
@@ -47,7 +51,7 @@ B. -W. Tseng and P. -Y. Wu, "Compressive Privacy Generative Adversarial Network,
 
 ### 加密器
 
-這邊通常是直接使用先前分類器任務的NN，擷取到某一層
+這邊通常是直接使用通常分類器任務的NN，擷取到某一層
 
 以圖像分類來說就是CNN最後一層不要拉分類的softmax，只有到中間的hidden layers
 
@@ -88,11 +92,13 @@ $$
 
 $$L_{CPGAN}=\lambda L_{util}-L_{adv}$$
 
-參數更新於加密器上
+有多個loss function 在收斂上就會比較tricky了，參數更新於加密器上
 
 # 訓練training code
 
 ## 前處理
+[前處理：產生臉](../CPGAN_example/CPGAN_example/find_face_by_MTCNN.py)
+
 先前處理一下圖片，用一下mtcnn這個網路架構把臉截下來
 ```
 from facenet_pytorch import MTCNN,InceptionResnetV1
@@ -112,7 +118,7 @@ for i in range(1,41):
 
 原圖為92x112的灰階圖片，這邊我截成92x92
 
-(沒什麼必要做這步，主要就是比較一般化一些)
+(這一步只是想讓原始圖片變成正方形，做一個資料處理的標準化)
 ## 處理參數初始化用的function
 
 ```

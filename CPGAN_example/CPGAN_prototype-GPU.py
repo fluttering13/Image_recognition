@@ -2,18 +2,10 @@ import matplotlib.pyplot as plt
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
-#from sklearn.svm import SVC
 import numpy as np
 import torch.optim as optim
 import pickle
-# import scipy
-# import optuna
-# i=1
-# j=5
-# pic=plt.imread('./att_faces/s{}/{}.pgm'.format(i,j))
-# print(pic.shape)
-# plt.imshow(pic)  
-# plt.show()
+
 
 Encoder_dimension=16
 trade_off_const=1
@@ -72,14 +64,6 @@ for i in range(1,41):
             test_true.append(i-1)
             #test_true_one_hot.append(np.eye(40)[i-1])
 
-
-
-
-###Classifier:SVM
-# SVM = SVC(kernel='linear', decision_function_shape="ovo")
-# SVM.fit(train_data, train_true)
-# train_score = SVM.score(train_data, train_true)
-# test_score = SVM.score(test_data, test_true)
 
 
 def compare_labels(labels,test_label):
