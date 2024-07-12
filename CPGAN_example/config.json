@@ -1,0 +1,12 @@
+{
+    "network_setting": {
+      "fc1_input_features": 2000,  
+      "encoder_dimension": 128
+    },
+    "training_setting":{
+      "processing_times":100,  
+      "training_epoches":100,
+      "trade_off_const":1
+    }
+
+  }

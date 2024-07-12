@@ -119,8 +119,14 @@ for i in range(1,41):
 原圖為92x112的灰階圖片，這邊我截成92x92
 
 (這一步只是想讓原始圖片變成正方形，做一個資料處理的標準化)
-## 處理參數初始化用的function
 
+## NN設定
+[訓練用：網路初始化](../CPGAN_example/CPGAN_example/CPGAN_CNN_net.py)
+
+### 參數初始化
+通常情況是nomal就足夠用了，針對不同的distribution也許有好的初始化參數
+
+任何參數的東西丟給optuna調就對了
 ```
 def weights_init(net, init_type='normal', init_gain=0.02):
     def init_func(m):
@@ -143,41 +149,53 @@ def weights_init(net, init_type='normal', init_gain=0.02):
     net.apply(init_func)
 ```
 
-## 分類器
+### Classifer
 ```
 class Classifier(nn.Module):
     def __init__(self):
         super(Classifier, self).__init__()
-        self.fc = nn.Linear(Encoder_dimension, 40)    
+        self.fc = nn.Linear(encoder_dimension, 40)    
     def forward(self, x):
         x = self.fc(x)
-        #x= F.softmax(x)
         return x
 ```
 
-## 載入檔案
-用cv2載入要在/255 訓練效果會比較好
+### Encoder
 
-有些人也會在訓練前把它map到一個常態分布上
+fc1_input_features跟原始圖片的shape與batch有關，如果輸入有變再去config.json調一下
+
+Encoder其實只是原始CNN拔掉最後一層
 ```
-import cv2
-for i in range(1,41):
-    for j in range(1,11):
-        data=cv2.imread('./CPGAN_example/pre-process/pic'+str(i)+'_'+str(j)+'.jpg',cv2.IMREAD_GRAYSCALE)
-        data=data.reshape([1,92,92])/255
-        #print(data)
+class Encoder(nn.Module):
+    def __init__(self):
+        super(Encoder, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=3, kernel_size=(5, 5))
+        self.relu1 = nn.ReLU()
+        self.maxpool1 = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
+        self.conv2 = nn.Conv2d(in_channels=3, out_channels=5,kernel_size=(5, 5))
+        self.relu2 = nn.ReLU()
+        self.maxpool2 = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
+        self.fc1 = nn.Linear(in_features=fc1_input_features, out_features=encoder_dimension)
+        self.Dropout    = nn.Dropout(1 - 0.5)        
+        self.last_bn = nn.BatchNorm1d(encoder_dimension, eps=0.001, momentum=0.1, affine=True)
 
-        if j <= 5:
-            raw_train_data.append(data)
-            train_true.append(i-1)
-            #train_true_one_hot.append(np.eye(40)[i-1])
-        else:
-            raw_test_data.append(data)
-            test_true.append(i-1)
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.relu1(x)
+        x = self.maxpool1(x)
+        x = self.conv2(x)
+        x = self.relu2(x)
+        x = self.maxpool2(x)       
+        x = x.view(x.size(0), -1)
+        x = self.fc1(x)
+        before_normalize = self.last_bn(x)
+
+        return before_normalize
 ```
 
 
 ## 計算0/1 acc用的function
+[訓練用：自定義函數](../CPGAN_example/CPGAN_example/CPGAN_utilty.py)
 ```
 def compare_labels(labels,test_label):
     correct=0
@@ -188,51 +206,119 @@ def compare_labels(labels,test_label):
     return acc
 ```
 
-## 定義oracle 指導訓練過程 
-torch裡會用的function
 
-為了方便辨識，定義以下的indexes：
+## 訓練過程與載入檔案
+[訓練過程](../CPGAN_example/CPGAN_example/CPGAN_CNN_train.py)
 
-0就是分類器用的 
+### 載入檔案
+用cv2載入要再/255 訓練效果會比較好
 
-1就是重構器用的 
+或者有些人也會在訓練前把它map到一個常態分布上
 
-2是編碼器用的
+這邊是讀取圖片的灰階
 ```
-encoder = Encoder()
+def read_data_before_training(training_dict):# load data in grayscale
 
-classifier=Classifier()
+    raw_train_data=[]
+    train_true=[]
+    raw_test_data=[]
+    test_true=[]
+    for i in range(1,41):
+        for j in range(1,11):
+            #data=plt.imread('att_faces/s{}/{}.pgm'.format(i,j))
+            #data='./CPGAN_example/pre-process/pic'+str(i)+'_'+str(j)+'.jpg'
+            data=cv2.imread('./pre-process/pic'+str(i)+'_'+str(j)+'.jpg',cv2.IMREAD_GRAYSCALE)
+            data=data.reshape([1,92,92])/255
+            #print(data)
 
+            if j <= 5:
+                raw_train_data.append(data)
+                train_true.append(i-1)
+            else:
+                raw_test_data.append(data)
+                test_true.append(i-1)
 
-### define the loss function and optimizer
-### 0:Classier, 1:constructor
-criterion0 = nn.CrossEntropyLoss()
-criterion1= nn.MSELoss()
+    raw_data=torch.from_numpy(np.array(raw_train_data)).float().reshape([200,1,92,92]).cuda()
+    raw_data_train=torch.from_numpy(np.array(raw_train_data)).float().reshape([200,1,92,92]).cuda()
+    labels=torch.from_numpy(np.array(train_true)).long().cuda()
 
+    test_data=torch.from_numpy(np.array(raw_test_data))
+    test_data=test_data.float().reshape([200,1,92,92]).cuda()
 
-optimizer0 = optim.Adam(classifier.parameters(), lr=0.001,  weight_decay=1e-6)
-optimizer2 = optim.Adam(encoder.parameters(), lr=0.001,  weight_decay=1e-6)
+    training_dict['raw_train_data']=raw_train_data
+    training_dict['raw_test_data']=raw_test_data
+    training_dict['train_true']=train_true
+    training_dict['test_true']=test_true
+    training_dict['test_data']=test_data
+    training_dict['raw_data']=raw_data
+    training_dict['raw_data_train']=raw_data_train
+    training_dict['labels']=labels
+    
+    return training_dict
 ```
 
-index=0的時候是classier的訓練過程要到它收斂
+### 定義訓練過程所用物件
+torch標準起手式
 ```
-def oracle(index,data,labels,*raw_data):
+def define_the_objs_in_training(training_dict):
+    ###define the net
+    encoder = Encoder().cuda()
+    classifier=Classifier().cuda()
+
+    ### define the loss function and optimizer
+    ### 0:Classier, 1:constructor
+    loss_CE_obj = nn.CrossEntropyLoss().cuda()
+    loss_MSE_obj= nn.MSELoss().cuda()
+
+
+    optimizer_classifier = optim.Adam(classifier.parameters(), lr=0.001,  weight_decay=1e-6)
+    optimizer_encoder = optim.Adam(encoder.parameters(), lr=0.001,  weight_decay=1e-6)
+
+    training_dict['encoder']=encoder
+    training_dict['classifier']=classifier
+    training_dict['loss_CE_obj']=loss_CE_obj
+    training_dict['loss_MSE_obj']=loss_MSE_obj
+    training_dict['optimizer_classifier']=optimizer_classifier
+    training_dict['optimizer_encoder']=optimizer_encoder
+    return training_dict
+```
+
+### 定義CPGAN_processing CPGAN核心算法
+
+index是指在主程式裡面走哪個分流，主要有三個路線
+分類器、重建器、跟最後的加密器
+
+分類器主要走gradient descent 算法收斂就結束，算太久就跳開
+```
+def CPGAN_processing(index,training_dict):
+
+    optimizer_classifier=training_dict['optimizer_classifier']
+    optimizer_encoder=training_dict['optimizer_encoder']
+    classifier=training_dict['classifier']
+    loss_CE_obj=training_dict['loss_CE_obj']
+    loss_MSE_obj=training_dict['loss_MSE_obj']
+
+    
+    labels=training_dict['labels']
+
+    trade_off_const=training_dict['trade_off_const']
     ###0:Classier:return the outcome of prediction
-    if index==0:
+    if index=='classifier':
         #criterion0 = nn.CrossEntropyLoss()
         #optimizer0 = optim.Adam(classifier.parameters(), lr=0.001,  weight_decay=1e-6)
+        data=training_dict['data_detach']
         loss_list=[]
         dif_loss=1
         loss_value=1
         count_dif_reverse=0
         count=0
         while True:
-            optimizer0.zero_grad()
+            optimizer_classifier.zero_grad()
             outputs=classifier(data)
-            loss0 = criterion0(outputs, labels)
-            loss0.backward() ###retain_graph=True
-            optimizer0.step()
-            loss_value=loss0.item()
+            loss_classifer = loss_CE_obj(outputs, labels)
+            loss_classifer.backward() ###retain_graph=True
+            optimizer_classifier.step()
+            loss_value=loss_classifer.item()
             #print('count',count,'loss',loss_value)
             if count==0:
                 pass
@@ -247,55 +333,55 @@ def oracle(index,data,labels,*raw_data):
             count=count+1
             if count>=20000:
                 break
-            
-        return  loss0, outputs
-
-    elif index==1:
+        return  loss_classifer, outputs
 ```
-1的時候是重構器，手刻方程式就行
+重建器只是找最接近原始圖片的解，這邊是ridge算法可以拿到global的解
 ```
+    elif index=='reconstructor':
     ###1:reconstruction: return prediction and loss
         #criterion1 = nn.MSELoss()
+        data=training_dict['data_detach']
+        raw_data=training_dict['raw_data']
         ridge_cof=0.001
-        Encoder_dimension=data.shape[1]
-        raw_data=raw_data[0]
+        encoder_dimension=data.shape[1]
+
         raw_data=raw_data.reshape([200,-1])
         img_len=raw_data.shape[1]
-        matrix_sum1=torch.zeros([Encoder_dimension,Encoder_dimension])
-        matrix_sum2=torch.zeros(Encoder_dimension,img_len)
+        matrix_sum1=torch.zeros([encoder_dimension,encoder_dimension]).cuda()
+        matrix_sum2=torch.zeros(encoder_dimension,img_len).cuda()
         for i in range(len(data)):
             vec_z=data[i,:].reshape([-1,1])
             vec_x=raw_data[i,:].reshape([-1,1])
             matrix_sum1=matrix_sum1+vec_z*vec_z.t()
             matrix_sum2=matrix_sum2+vec_z*vec_x.t()
-        W_LRR=torch.matmul(torch.linalg.inv(matrix_sum1/len(data)+ridge_cof*torch.eye(Encoder_dimension)),matrix_sum2/len(data))
+        W_LRR=torch.matmul(torch.linalg.inv(matrix_sum1/len(data)+ridge_cof*torch.eye(encoder_dimension).cuda()),matrix_sum2/len(data))
 
         x_reconstructed=torch.matmul(W_LRR.t(),data.t())
-        loss1=criterion1(x_reconstructed, raw_data.t())
-        return loss1, x_reconstructed
+        loss_reconstructor=loss_MSE_obj(x_reconstructed, raw_data.t())
+        return loss_reconstructor, x_reconstructed
 ```
+最後一步是encoder，要綜合上面兩個部份，拿到gan loss在更新網路參數
 
-最後是編碼器的更新，遞迴函數，自己呼叫自己
-
-trade_off_const就是上面的$\lambda$
-```
-    elif index==2:
-
-        optimizer0.zero_grad()
+這邊比較好的寫法是直接複製算好的loss obj，這裡只是要強調不能直接拿原本不然會loss更新兩次的問題
+```    
+    elif index=='encoder':
+        data=training_dict['data_encoder']
+        optimizer_classifier.zero_grad()
         outputs=classifier(data)
-        loss0 = criterion0(outputs, labels)
-        loss1, x_reconstructed=oracle(1,data,labels,*raw_data)
-        gen_loss=trade_off_const*loss0-loss1
-        optimizer2.zero_grad()
-        gen_loss.backward()
-        optimizer2.step()
-        return gen_loss
+        loss_classifer = loss_CE_obj(outputs, labels)
+        loss_reconstructor, x_reconstructed=CPGAN_processing('reconstructor',training_dict)
+        gan_loss=trade_off_const*loss_classifer-loss_reconstructor
+        optimizer_encoder.zero_grad()
+        gan_loss.backward()
+        optimizer_encoder.step()
+
+        training_dict['data_encoder']=data
+        return gan_loss
     else:
         return None
 ```
 
-
-##主程式
+### 主程式
 
 初始化
 ```
@@ -342,31 +428,31 @@ err_list.append(err)
 acc_list.append(acc)
 loss1_list.append(loss_value)      
 dic={'err_list':err_list,'acc_list':acc_list,'loss1_list':loss1_list}
-fp=open('./CPGAN_example/CPGAN_CNN_d_'+str(Encoder_dimension)+'.pkl', 'wb')
+fp=open('./CPGAN_example/CPGAN_CNN_d_'+str(encoder_dimension)+'.pkl', 'wb')
 pickle.dump(dic, fp)
 
 ```
 
-## 訓練過程
+## 讀取結果
 這邊的loss function是重建器的loss (它不是GAN的loss)
 
 這是一件我們希望看的到事情，我們會想找到某種加密的function，隨著訓練的開始，重建的難度越高，才是一個好的隱私加密模式。
 
 這邊的trail是指每一個trail 裡面等到分類器跟重建器都收斂，再更新一次加密器
 
-<div align=center><img src="./CPGAN_example/pic/loss.png" width="500px"/></div>
+<div align=center><img src="../CPGAN_example/pic/loss.png" width="500px"/></div>
 
 再看看ACC的表現怎麼樣，就算一開始沒有找到很好的ACC的點，這個演算法也會幫助找到比較，也許是重建的概念是可以幫助圖片辨識有更好的表現，但隨著重建數據的難度越高，ACC其實也因為可利用性降低而下降。
 
-<div align=center><img src="./CPGAN_example/pic/acc.png" width="500px"/></div>
+<div align=center><img src="../CPGAN_example/pic/acc.png" width="500px"/></div>
 
 ## 訓練結果
 我們可以對照一下paper內的Theoretical 結果
 
-<div align=center><img src="./CPGAN_example/pic/theory.png" width="450px"/></div>
+<div align=center><img src="../CPGAN_example/pic/theory.png" width="450px"/></div>
 
 我們來測試一百個不同的初始點，每個初始點做100個trial，總共10000個點
 
 再實作上就是看可以忍受的Acc到多少，去挑靠近右上方的點，就可以找到理想的加密模式。
 
-<div align=center><img src="./CPGAN_example/pic/privacy-acc.png" width="500px"/></div>
+<div align=center><img src="../CPGAN_example/pic/privacy-acc.png" width="500px"/></div>

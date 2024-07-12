@@ -12,10 +12,10 @@ import cv2
 
 from CPGAN_CNN_net import Encoder, Classifier, init_weights
 from CPGAN_utilty import compute_one_zero_acc, training_curry
+import json
 
 
-
-def read_data_before_training(training_dict):
+def read_data_before_training(training_dict):# load data in grayscale
 
     raw_train_data=[]
     train_true=[]
@@ -77,7 +77,8 @@ def define_the_objs_in_training(training_dict):
     training_dict['optimizer_encoder']=optimizer_encoder
     return training_dict
 
-def oracle(index,training_dict):
+def CPGAN_processing(index,training_dict):
+
     optimizer_classifier=training_dict['optimizer_classifier']
     optimizer_encoder=training_dict['optimizer_encoder']
     classifier=training_dict['classifier']
@@ -119,7 +120,6 @@ def oracle(index,training_dict):
             count=count+1
             if count>=20000:
                 break
-        breakpoint()
         return  loss_classifer, outputs
 
     elif index=='reconstructor':
@@ -128,18 +128,18 @@ def oracle(index,training_dict):
         data=training_dict['data_detach']
         raw_data=training_dict['raw_data']
         ridge_cof=0.001
-        Encoder_dimension=data.shape[1]
+        encoder_dimension=data.shape[1]
 
         raw_data=raw_data.reshape([200,-1])
         img_len=raw_data.shape[1]
-        matrix_sum1=torch.zeros([Encoder_dimension,Encoder_dimension]).cuda()
-        matrix_sum2=torch.zeros(Encoder_dimension,img_len).cuda()
+        matrix_sum1=torch.zeros([encoder_dimension,encoder_dimension]).cuda()
+        matrix_sum2=torch.zeros(encoder_dimension,img_len).cuda()
         for i in range(len(data)):
             vec_z=data[i,:].reshape([-1,1])
             vec_x=raw_data[i,:].reshape([-1,1])
             matrix_sum1=matrix_sum1+vec_z*vec_z.t()
             matrix_sum2=matrix_sum2+vec_z*vec_x.t()
-        W_LRR=torch.matmul(torch.linalg.inv(matrix_sum1/len(data)+ridge_cof*torch.eye(Encoder_dimension).cuda()),matrix_sum2/len(data))
+        W_LRR=torch.matmul(torch.linalg.inv(matrix_sum1/len(data)+ridge_cof*torch.eye(encoder_dimension).cuda()),matrix_sum2/len(data))
 
         x_reconstructed=torch.matmul(W_LRR.t(),data.t())
         loss_reconstructor=loss_MSE_obj(x_reconstructed, raw_data.t())
@@ -150,18 +150,18 @@ def oracle(index,training_dict):
         optimizer_classifier.zero_grad()
         outputs=classifier(data)
         loss_classifer = loss_CE_obj(outputs, labels)
-        loss_reconstructor, x_reconstructed=oracle('reconstructor',training_dict)
+        loss_reconstructor, x_reconstructed=CPGAN_processing('reconstructor',training_dict)
         gan_loss=trade_off_const*loss_classifer-loss_reconstructor
         optimizer_encoder.zero_grad()
         gan_loss.backward()
         optimizer_encoder.step()
-        breakpoint()
+        ()
         training_dict['data_encoder']=data
         return gan_loss
     else:
         return None
         
-##############################################
+
 def CPGAN_training_epoches(training_dict):
 
     encoder=training_dict['encoder']
@@ -170,7 +170,7 @@ def CPGAN_training_epoches(training_dict):
     raw_data_train=training_dict['raw_data_train']
     labels=training_dict['labels']
     raw_data=training_dict['raw_data']
-    Encoder_dimension=training_dict['Encoder_dimension']
+    encoder_dimension=training_dict['encoder_dimension']
 
     training_process_times=training_dict['training_process_times']
     training_epoches=training_dict['training_epoches']
@@ -178,8 +178,6 @@ def CPGAN_training_epoches(training_dict):
     test_data=training_dict['test_data']
     #container of storing training information
     loss_reconstructor_list=[]
-    loss2_list=[]
-    GAN_loss_list=[]
     acc_list=[]
 
     ####training begin
@@ -194,7 +192,7 @@ def CPGAN_training_epoches(training_dict):
             training_dict['data_detach']=data_detach
             training_dict['data_encoder']=data_encoder
 
-            loss_classifer, outputs_classifer=oracle('classifier',training_dict)
+            loss_classifer, outputs_classifer=CPGAN_processing('classifier',training_dict)
   
 
             embeding_from_test_data=encoder(test_data)
@@ -207,21 +205,21 @@ def CPGAN_training_epoches(training_dict):
             acc=compute_one_zero_acc(labels,label_test)
 
 
-            loss_reconstructor, x_reconstructed=oracle('reconstructor',training_dict)
+            loss_reconstructor, x_reconstructed=CPGAN_processing('reconstructor',training_dict)
 
-            gan_loss=oracle('encoder',training_dict)
+            gan_loss=CPGAN_processing('encoder',training_dict)
             loss_value=loss_reconstructor.item()
-            
+            #print(gan_loss)
             print(err,acc,loss_value)
-            breakpoint()
+            ()
             err_list.append(err)
             acc_list.append(acc)
             loss_reconstructor_list.append(loss_value)      
             dic={'err_list':err_list,'acc_list':acc_list,'loss1_list':loss_reconstructor_list}
-            fp=open('./check_points/CPGAN_CNN_d_'+str(Encoder_dimension)+'.pkl', 'wb')
+            fp=open('./check_points/CPGAN_CNN_d_'+str(encoder_dimension)+'.pkl', 'wb')
             #pickle.dump(dic, fp)
             if count%10==0:
-                fp=open('./check_points/CPGAN_CNN_d_'+str(Encoder_dimension)+'backup'+'.pkl', 'wb')
+                fp=open('./check_points/CPGAN_CNN_d_'+str(encoder_dimension)+'backup'+'.pkl', 'wb')
                 #pickle.dump(dic, fp)
             count=count+1
     return training_dict
@@ -229,18 +227,20 @@ def CPGAN_training_epoches(training_dict):
 
 
 
+if __name__=='__main__':
 
-training_dict={}
-training_dict['trade_off_const']=1
-training_dict['Encoder_dimension']=128
+    training_dict={}
+    config = json.load(open('config.json'))
 
-training_dict['training_process_times']=100
-training_dict['training_epoches']=100
+    training_dict['encoder_dimension']=config["network_setting"]["encoder_dimension"]
 
+    training_dict['trade_off_const']=config["training_setting"]["trade_off_const"]
+    training_dict['training_process_times']=config["training_setting"]["training_process_times"]
+    training_dict['training_epoches']=config["training_setting"]["training_epoches"]
 
-training_processing=training_curry(read_data_before_training,
-               define_the_objs_in_training,
-               CPGAN_training_epoches
-               )
+    training_processing=training_curry(read_data_before_training,
+                define_the_objs_in_training,
+                CPGAN_training_epoches
+                )
 
-training_processing(training_dict)
+    training_processing(training_dict)

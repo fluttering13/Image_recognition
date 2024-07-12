@@ -2,11 +2,11 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 
-Encoder_dimension=128
-fp=open('./CPGAN_example/CPGAN_CNN_d_'+str(Encoder_dimension)+'.pkl', 'rb')
+encoder_dimension=128
+fp=open('./CPGAN_example/CPGAN_CNN_d_'+str(encoder_dimension)+'.pkl', 'rb')
 data_128=pickle.load(fp)
-Encoder_dimension=256
-fp=open('./CPGAN_example/CPGAN_CNN_d_'+str(Encoder_dimension)+'.pkl', 'rb')
+encoder_dimension=256
+fp=open('./CPGAN_example/CPGAN_CNN_d_'+str(encoder_dimension)+'.pkl', 'rb')
 data_256=pickle.load(fp)
 
 
