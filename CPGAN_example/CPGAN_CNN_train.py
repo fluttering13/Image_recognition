@@ -90,9 +90,7 @@ def CPGAN_processing(index,training_dict):
 
     trade_off_const=training_dict['trade_off_const']
     ###0:Classier:return the outcome of prediction
-    if index=='classifier':
-        #criterion0 = nn.CrossEntropyLoss()
-        #optimizer0 = optim.Adam(classifier.parameters(), lr=0.001,  weight_decay=1e-6)
+    if index=='classifier':# the classifer will be returned outcome of prediction
         data=training_dict['data_detach']
         loss_list=[]
         dif_loss=1
@@ -103,7 +101,7 @@ def CPGAN_processing(index,training_dict):
             optimizer_classifier.zero_grad()
             outputs=classifier(data)
             loss_classifer = loss_CE_obj(outputs, labels)
-            loss_classifer.backward() ###retain_graph=True
+            loss_classifer.backward() 
             optimizer_classifier.step()
             loss_value=loss_classifer.item()
             #print('count',count,'loss',loss_value)
@@ -115,7 +113,7 @@ def CPGAN_processing(index,training_dict):
                count_dif_reverse=count_dif_reverse+1
             if count_dif_reverse>=1000:
                 break 
-            #print(count,dif_loss)
+            
             loss_list.append(loss_value)
             count=count+1
             if count>=20000:
@@ -123,7 +121,7 @@ def CPGAN_processing(index,training_dict):
         return  loss_classifer, outputs
 
     elif index=='reconstructor':
-    ###1:reconstruction: return prediction and loss
+    ###1:reconstruction: reconstructor is designed to reconstruct the original input data with the embeding vector 
         #criterion1 = nn.MSELoss()
         data=training_dict['data_detach']
         raw_data=training_dict['raw_data']
@@ -145,17 +143,17 @@ def CPGAN_processing(index,training_dict):
         loss_reconstructor=loss_MSE_obj(x_reconstructed, raw_data.t())
         return loss_reconstructor, x_reconstructed
     
-    elif index=='encoder':
+    elif index=='encoder': 
+    ###2:encoder: finally, the encoder sum up the loss from classifer and reconstructor. Remember the copy is necessary then the back propagation is doable.
         data=training_dict['data_encoder']
         optimizer_classifier.zero_grad()
         outputs=classifier(data)
         loss_classifer = loss_CE_obj(outputs, labels)
-        loss_reconstructor, x_reconstructed=CPGAN_processing('reconstructor',training_dict)
-        gan_loss=trade_off_const*loss_classifer-loss_reconstructor
+        loss_reconstructor, x_reconstructed=CPGAN_processing('reconstructor',training_dict) #make copy of reconstructor to avoid double back propagation problems
+        gan_loss=trade_off_const*loss_classifer-loss_reconstructor # combine two loss
         optimizer_encoder.zero_grad()
-        gan_loss.backward()
+        gan_loss.backward() #back propagation
         optimizer_encoder.step()
-        ()
         training_dict['data_encoder']=data
         return gan_loss
     else:
@@ -166,27 +164,21 @@ def CPGAN_training_epoches(training_dict):
 
     encoder=training_dict['encoder']
     classifier=training_dict['classifier']
-
     raw_data_train=training_dict['raw_data_train']
     labels=training_dict['labels']
-    raw_data=training_dict['raw_data']
     encoder_dimension=training_dict['encoder_dimension']
-
     training_process_times=training_dict['training_process_times']
     training_epoches=training_dict['training_epoches']
-    #test data
     test_data=training_dict['test_data']
-    #container of storing training information
-    loss_reconstructor_list=[]
-    acc_list=[]
 
-    ####training begin
+    #initialize the list to save the checkpoints
+    loss_reconstructor_list=[]
     err_list=[]
     acc_list=[]
     count=0
-    for j in range(training_process_times):
+    for _ in range(training_process_times):
         init_weights(encoder)#start from different init params
-        for i in range(training_epoches):
+        for _ in range(training_epoches):
             data_detach = encoder(raw_data_train).detach() # inputs of classifer, reconstructor
             data_encoder= encoder(raw_data_train) # inputs of decoder which have gradients     
             training_dict['data_detach']=data_detach
@@ -209,18 +201,17 @@ def CPGAN_training_epoches(training_dict):
 
             gan_loss=CPGAN_processing('encoder',training_dict)
             loss_value=loss_reconstructor.item()
-            #print(gan_loss)
+
             print(err,acc,loss_value)
-            ()
             err_list.append(err)
             acc_list.append(acc)
             loss_reconstructor_list.append(loss_value)      
             dic={'err_list':err_list,'acc_list':acc_list,'loss1_list':loss_reconstructor_list}
             fp=open('./check_points/CPGAN_CNN_d_'+str(encoder_dimension)+'.pkl', 'wb')
-            #pickle.dump(dic, fp)
+            pickle.dump(dic, fp)
             if count%10==0:
                 fp=open('./check_points/CPGAN_CNN_d_'+str(encoder_dimension)+'backup'+'.pkl', 'wb')
-                #pickle.dump(dic, fp)
+                pickle.dump(dic, fp)
             count=count+1
     return training_dict
 
@@ -229,18 +220,21 @@ def CPGAN_training_epoches(training_dict):
 
 if __name__=='__main__':
 
-    training_dict={}
-    config = json.load(open('config.json'))
+        ###setting the training parameters from config.json
+        training_dict={}
+        config = json.load(open('config.json'))
 
-    training_dict['encoder_dimension']=config["network_setting"]["encoder_dimension"]
+        training_dict['encoder_dimension']=config["network_setting"]["encoder_dimension"]
 
-    training_dict['trade_off_const']=config["training_setting"]["trade_off_const"]
-    training_dict['training_process_times']=config["training_setting"]["training_process_times"]
-    training_dict['training_epoches']=config["training_setting"]["training_epoches"]
+        training_dict['trade_off_const']=config["training_setting"]["trade_off_const"]
+        training_dict['training_process_times']=config["training_setting"]["training_process_times"]
+        training_dict['training_epoches']=config["training_setting"]["training_epoches"]
 
-    training_processing=training_curry(read_data_before_training,
-                define_the_objs_in_training,
-                CPGAN_training_epoches
-                )
+        ###main functions
+        training_processing=training_curry(
+                    read_data_before_training,
+                    define_the_objs_in_training,
+                    CPGAN_training_epoches
+                    )
 
-    training_processing(training_dict)
+        training_processing(training_dict)

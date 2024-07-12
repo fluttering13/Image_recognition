@@ -208,7 +208,30 @@ def compare_labels(labels,test_label):
 
 
 ## 訓練過程與載入檔案
-[訓練過程](../CPGAN_example/CPGAN_example/CPGAN_CNN_train.py)
+[訓練過程與主程式](../CPGAN_example/CPGAN_example/CPGAN_CNN_train.py)
+
+### 主程式
+
+總共有三個主程式，重點在CPGAN_training_epoches
+```
+    ###setting the training parameters from config.json
+    training_dict={}
+    config = json.load(open('config.json'))
+
+    training_dict['encoder_dimension']=config["network_setting"]["encoder_dimension"]
+
+    training_dict['trade_off_const']=config["training_setting"]["trade_off_const"]
+    training_dict['training_process_times']=config["training_setting"]["training_process_times"]
+    training_dict['training_epoches']=config["training_setting"]["training_epoches"]
+
+    ###main functions
+    training_processing=training_curry(read_data_before_training,
+                define_the_objs_in_training,
+                CPGAN_training_epoches
+                )
+
+    training_processing(training_dict)
+```
 
 ### 載入檔案
 用cv2載入要再/255 訓練效果會比較好
@@ -258,7 +281,7 @@ def read_data_before_training(training_dict):# load data in grayscale
 ```
 
 ### 定義訓練過程所用物件
-torch標準起手式
+torch標準起手式，會用到兩個loss function所以當然也要兩個optimizer
 ```
 def define_the_objs_in_training(training_dict):
     ###define the net
@@ -282,11 +305,100 @@ def define_the_objs_in_training(training_dict):
     training_dict['optimizer_encoder']=optimizer_encoder
     return training_dict
 ```
+### CPGAN_training_epoches
+training_process_times是指當整個training_epoches都結束，再選另外一個初始點重新訓練的次數
+
+CPGAN_processing是主要CPGAN的流程
+
+前面就是初始化
+```
+def CPGAN_training_epoches(training_dict):
+
+    encoder=training_dict['encoder']
+    classifier=training_dict['classifier']
+    raw_data_train=training_dict['raw_data_train']
+    labels=training_dict['labels']
+    encoder_dimension=training_dict['encoder_dimension']
+    training_process_times=training_dict['training_process_times']
+    training_epoches=training_dict['training_epoches']
+    test_data=training_dict['test_data']
+
+    #initialize the list to save the checkpoints
+    loss_reconstructor_list=[]
+    err_list=[]
+    acc_list=[]
+    count=0
+    for _ in range(training_process_times):
+        init_weights(encoder) #start from different init params
+```
+
+接下就進入到epoches的部份，拆成兩個data跟一個copy，原因是用同一份data再做多個back propagation容易會出問，跟torch design的grad grapth是有關係的。
+
+做要更新網路參數的部份有三個部份，這邊會做到兩張計算grad的圖，各自在自己的部份更新
+
+1.classifer (吃detach的data 做 grad descent) 這邊一張
+
+2.reconstructor (這邊我們手動做ridge找global solution)
+
+3.綜合以上的loss function在encoder的部份再更新一次 (吃data_encoder 這邊是我們要更新的train data) 這邊再一張
+
+(其實如果都自己寫optimizer的更新，就可以不用這樣麻煩，懶人一點就要繞一些)
+
+```
+        for _ in range(training_epoches):
+            data_detach = encoder(raw_data_train).detach() # inputs of classifer, reconstructor
+            data_encoder= encoder(raw_data_train) # inputs of decoder which have gradients     
+            training_dict['data_detach']=data_detach
+            training_dict['data_encoder']=data_encoder
+```
+
+接著走完GAN就會拿到gan_loss，主要用來評估training過程是不是smooth的
+
+但令一個從constuctor 拿到的loss是我們重點評估隱私加密能力的部份，後續load data會看得比較清楚
+```
+            loss_classifer, outputs_classifer=CPGAN_processing('classifier',training_dict)
+  
+
+            embeding_from_test_data=encoder(test_data)
+            outputs_test=classifier(embeding_from_test_data)
+
+            label_trained=torch.argmax(outputs_classifer,1)
+            label_test=torch.argmax(outputs_test,1)
+
+            err=compute_one_zero_acc(labels,label_trained)
+            acc=compute_one_zero_acc(labels,label_test)
+
+
+            loss_reconstructor, x_reconstructed=CPGAN_processing('reconstructor',training_dict)
+
+            gan_loss=CPGAN_processing('encoder',training_dict)
+            loss_value=loss_reconstructor.item()
+```
+
+```
+            print(err,acc,loss_value)
+            err_list.append(err)
+            acc_list.append(acc)
+            loss_reconstructor_list.append(loss_value)      
+            dic={'err_list':err_list,'acc_list':acc_list,'loss1_list':loss_reconstructor_list}
+            fp=open('./check_points/CPGAN_CNN_d_'+str(encoder_dimension)+'.pkl', 'wb')
+            pickle.dump(dic, fp)
+            if count%10==0:
+                fp=open('./check_points/CPGAN_CNN_d_'+str(encoder_dimension)+'backup'+'.pkl', 'wb')
+                pickle.dump(dic, fp)
+            count=count+1
+    return training_dict
+```
+
 
 ### 定義CPGAN_processing CPGAN核心算法
 
 index是指在主程式裡面走哪個分流，主要有三個路線
 分類器、重建器、跟最後的加密器
+
+前面兩個要更新參數，最後的加密器是把前面兩個再做一次back propagation，
+
+但這邊torch編程上會有問題，需要做個copy，才能在torch上面更新參數
 
 分類器主要走gradient descent 算法收斂就結束，算太久就跳開
 ```
@@ -335,6 +447,7 @@ def CPGAN_processing(index,training_dict):
                 break
         return  loss_classifer, outputs
 ```
+
 重建器只是找最接近原始圖片的解，這邊是ridge算法可以拿到global的解
 ```
     elif index=='reconstructor':
@@ -362,7 +475,7 @@ def CPGAN_processing(index,training_dict):
 ```
 最後一步是encoder，要綜合上面兩個部份，拿到gan loss在更新網路參數
 
-這邊比較好的寫法是直接複製算好的loss obj，這裡只是要強調不能直接拿原本不然會loss更新兩次的問題
+這邊比較好的寫法是直接複製算好的loss obj，這裡只是要強調不能直接拿原本不然torch會有loss更新兩次的問題
 ```    
     elif index=='encoder':
         data=training_dict['data_encoder']
@@ -381,62 +494,14 @@ def CPGAN_processing(index,training_dict):
         return None
 ```
 
-### 主程式
 
-初始化
-```
-weights_init(encoder)
-```
-
-這邊的data都是指經過編碼器後的code
-
-data是給內部迴圈更新分類器跟重構器用的，要detach
-
-data2是給外部迴圈更新編碼器用的code
-```
-data = encoder(raw_data_train).detach()
-data2= encoder(raw_data_train)       
-```
-
-分類器結果
-```
-loss0, outputs0=oracle(0,data,labels)
-```
-做一下cross validation，拿err 跟 acc
-```
-code_test_data=encoder(test_data)
-outputs_test=classifier(code_test_data)
-label_trained=torch.argmax(outputs0,1)
-label_test=torch.argmax(outputs_test,1)
-err=compare_labels(labels,label_trained)
-acc=compare_labels(labels,label_test)
-```
-重構器的結果，這個loss function我們可以當作是隱私函數
-```
-loss1, x_reconstructed=oracle(1,data,labels,raw_data)
-loss_value=loss1.item()
-```
-再來是衡量函數，整個GAN的核心來更新encoder
-```
-gan_loss=oracle(2,data2,labels,raw_data)
-print(err,acc,loss_value)
-```
-
-算完記得存檔
-```
-err_list.append(err)
-acc_list.append(acc)
-loss1_list.append(loss_value)      
-dic={'err_list':err_list,'acc_list':acc_list,'loss1_list':loss1_list}
-fp=open('./CPGAN_example/CPGAN_CNN_d_'+str(encoder_dimension)+'.pkl', 'wb')
-pickle.dump(dic, fp)
-
-```
 
 ## 讀取結果
+training的GAN loss就不顯示出來了，就跟一般的training狀況差不多
+
 這邊的loss function是重建器的loss (它不是GAN的loss)
 
-這是一件我們希望看的到事情，我們會想找到某種加密的function，隨著訓練的開始，重建的難度越高，才是一個好的隱私加密模式。
+這是一件我們期望看到的事情，我們會想找到某種加密的function，隨著訓練的開始，重建的難度越高，加密的程度越高，才是一個好的隱私加密模式。
 
 這邊的trail是指每一個trail 裡面等到分類器跟重建器都收斂，再更新一次加密器
 
@@ -453,6 +518,15 @@ pickle.dump(dic, fp)
 
 我們來測試一百個不同的初始點，每個初始點做100個trial，總共10000個點
 
-再實作上就是看可以忍受的Acc到多少，去挑靠近右上方的點，就可以找到理想的加密模式。
 
 <div align=center><img src="../CPGAN_example/pic/privacy-acc.png" width="500px"/></div>
+
+### 總結
+
+這是一篇基於GAN的架構，由於會牽涉到多個loss function，再下去跑的時候參數要調一下。
+
+再來是這個對隱私加密的評估是模糊的，它只能對自己訓練的結果做評估，不能與其他的模型做比較。
+
+在實作上就是看可以忍受的Acc到多少，去挑靠近右上方的點，就可以找到理想的加密模式。
+
+這個方法可能沒辦法可以在任意的場景可以隨插隨用，都是要調一下的，但它提供了一個對解一個問題的思路。
