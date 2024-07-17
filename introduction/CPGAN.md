@@ -1,7 +1,15 @@
 # 隱私加密-CPGAN (Compressive Privacy Generative Adversarial Network)
 ## File說明
+
+本文引用，主要介紹並復現這篇的工作
+
+B. -W. Tseng and P. -Y. Wu, "Compressive Privacy Generative Adversarial Network," in IEEE Transactions on Information Forensics and Security, vol. 15
+
+
 Find_face_by_mtcnn.py：前處理，抓臉部，產生data用的
+
 CPGAN_CNN.py：重建器為CNN，ACC比較高與穩健，推薦使用
+
 CPGAN_load.py：載入檔案用的
 
 ## 前言
@@ -14,7 +22,7 @@ CPGAN_load.py：載入檔案用的
 
 所以接下來要提到的是差分隱私的概念，如何去定義數據隱私這件事情。
 
-這邊先提要一下，加密一定會影響到可利用性，加密相當於把訊息模糊了，也就是欄位的特徵會消失不見，這對回歸問題來說是很不利的，所以要如何取得一個平衡也是一個值得關注的重點。
+這邊先提要一下，加密一定會影響到可利用性，加密相當於把訊息模糊了，也就是欄位內的特徵會消失不見，這對回歸問題來說是很不利的，所以要如何取得一個平衡也是一個值得關注的重點。
 
 ## 差分隱私
 
@@ -44,9 +52,6 @@ $$
 
 <div align=center><img src="../CPGAN_example/pic/CPGAN_STRUCT.png" width="500px"/></div>
 
-本文引用，主要介紹並復現這篇的工作
-
-B. -W. Tseng and P. -Y. Wu, "Compressive Privacy Generative Adversarial Network," in IEEE Transactions on Information Forensics and Security, vol. 15
 
 
 ### 加密器
@@ -433,7 +438,7 @@ def CPGAN_processing(index,training_dict):
             loss_value=loss_classifer.item()
             #print('count',count,'loss',loss_value)
             if count==0:
-                pass
+                pass    
             else:
                 dif_loss=loss_list[-1]-loss_value
             if dif_loss<=1e-6:
